@@ -1,0 +1,1 @@
+{"compileOnSave":false,"compilerOptions":{"strict":true,"target":"ES2022","module":"ES2022","moduleResolution":"bundler","experimentalDecorators":true,"importHelpers":true,"skipLibCheck":true,"lib":["ES2022","dom"],"outDir":"./dist/out-tsc"},"angularCompilerOptions":{"strictTemplates":true}}

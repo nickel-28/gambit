@@ -1,0 +1,48 @@
+.app{display:flex;gap:36px;justify-content:center;align-items:flex-start;padding:32px 20px;flex-wrap:wrap}
+.table{display:flex;gap:14px;align-items:stretch}
+.evalbar{width:10px;border-radius:6px;background:#0c110f;overflow:hidden;display:flex;align-items:flex-end;border:1px solid var(--line)}
+.evalbar i{display:block;width:100%;background:linear-gradient(var(--mist),#b7cdbf);transition:height .5s cubic-bezier(.2,.8,.2,1)}
+.board{position:relative;width:min(88vmin,640px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);container-type:inline-size;
+  border-radius:10px;overflow:hidden;box-shadow:0 0 0 6px #0c110f,0 0 0 7px var(--line),0 30px 60px -20px #000}
+.board.thinking{cursor:progress}
+.sq{position:relative;display:flex;align-items:center;justify-content:center;background:var(--jade);cursor:pointer;user-select:none}
+.sq.light{background:var(--mist)}
+.sq.last{box-shadow:inset 0 0 0 100cqw rgba(240,184,74,.38)}
+.sq.sel{box-shadow:inset 0 0 0 100cqw rgba(240,184,74,.7)}
+.sq.check{background:radial-gradient(circle,var(--coral) 0,rgba(232,96,76,.2) 80%)}
+.sq.hint{outline:3px dashed #2f6df0;outline-offset:-4px}
+.sq.target::after{content:'';position:absolute;width:30%;height:30%;border-radius:50%;background:rgba(15,22,19,.32)}
+.sq.capt::after{width:88%;height:88%;background:none;border:5px solid rgba(15,22,19,.32)}
+.pc{font-size:10cqw;line-height:1;cursor:grab;z-index:1;transition:transform .12s;font-family:'Segoe UI Symbol','Noto Sans Symbols 2',serif}
+.pc:hover{transform:translateY(-2px) scale(1.04)}
+.pc.w,.gl.w{color:#fffaf0;-webkit-text-stroke:.7px #1c2420;text-shadow:0 3px 4px rgba(0,0,0,.35)}
+.pc:not(.w),.gl:not(.w){color:#18201c;-webkit-text-stroke:.5px #9db3a7;text-shadow:0 3px 4px rgba(0,0,0,.3)}
+.rk,.fl{position:absolute;font:700 1.9cqw Manrope;opacity:.65;color:var(--ink)}
+.rk{top:5%;left:6%}.fl{bottom:4%;right:7%}
+.veil{position:absolute;inset:0;z-index:5;background:rgba(10,16,13,.82);backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.veil h2{font:700 6cqw Fraunces,serif;margin:0;text-align:center;padding:0 20px}
+.veil p{font:500 4cqw Fraunces,serif;margin:0}
+.choices{display:flex;gap:12px}
+.choices button{font-size:9cqw;width:14cqw;height:14cqw;border-radius:12px;border:1px solid var(--line);background:var(--mist);color:#18201c;cursor:pointer}
+.choices button.w{color:#fffaf0;background:var(--jade);-webkit-text-stroke:.7px #1c2420}
+.panel{width:min(100%,340px);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:16px}
+h1{font:700 2.4rem Fraunces,serif;margin:0;letter-spacing:-.02em}
+.status{margin:0;padding:10px 12px;border-radius:8px;background:#0f1613;color:var(--dim);font-weight:600}
+.status.alert{color:var(--ink);background:var(--amber)}
+.cap{display:flex;flex-direction:column;gap:6px;font-size:1.3rem;min-height:3.2rem}
+.cap>div{display:flex;align-items:center;flex-wrap:wrap}
+.who{font:600 .8rem Manrope;color:var(--dim);width:78px}
+.gl{font-style:normal;margin-right:-4px}
+.cap em{margin-left:10px;font:700 .85rem Manrope;color:var(--amber)}
+.moves{list-style:none;margin:0;padding:0;height:210px;overflow:auto;background:#0f1613;border-radius:8px;font-size:.92rem}
+.moves li{display:grid;grid-template-columns:36px 1fr 1fr;padding:6px 12px}
+.moves li:nth-child(even){background:rgba(255,255,255,.03)}
+.moves span{color:var(--dim)}.moves b{font-weight:600}.moves .empty{display:block;color:var(--dim)}
+.seg{display:flex;background:#0f1613;border-radius:8px;padding:3px;gap:3px}
+.seg button{flex:1;padding:8px 4px;border:0;border-radius:6px;background:none;color:var(--dim);font:600 .85rem Manrope;cursor:pointer}
+.seg button.on{background:var(--jade);color:#fff}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.actions button,.veil .primary{padding:11px;border-radius:8px;border:1px solid var(--line);background:#1d2b25;color:var(--text);font:600 .9rem Manrope;cursor:pointer}
+.primary{background:var(--amber)!important;color:var(--ink)!important;border-color:var(--amber)!important}
+button:hover{filter:brightness(1.12)}button:focus-visible,.sq:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}

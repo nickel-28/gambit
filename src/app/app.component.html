@@ -1,0 +1,68 @@
+<main class="app">
+  <section class="table">
+    <div class="evalbar" title="Material balance"><i [style.height.%]="whitePct()"></i></div>
+    <div class="board" [class.thinking]="busy()">
+      @for (i of order(); track i; let j = $index) {
+        <div class="sq" [class.light]="light(i)" [class.last]="isLast(i)" [class.sel]="sel() === i"
+             [class.target]="isTarget(i)" [class.capt]="isTarget(i) && !!s().b[i]" [class.check]="checkSq() === i"
+             [class.hint]="isHint(i)" (click)="click(i)" (dragover)="$event.preventDefault()" (drop)="drop(i)">
+          @if (s().b[i]; as p) {
+            <span class="pc" [class.w]="p[0] === 'w'" draggable="true" (dragstart)="pick(i)">{{ glyph(p) }}</span>
+          }
+          @if (j % 8 === 0) { <b class="rk">{{ rank(i) }}</b> }
+          @if (j > 55) { <b class="fl">{{ file(i) }}</b> }
+        </div>
+      }
+      @if (promo(); as pm) {
+        <div class="veil">
+          <p>Promote pawn to</p>
+          <div class="choices">
+            @for (m of pm; track m.promo) {
+              <button (click)="make(m)" [class.w]="s().turn === 'w'">{{ promoGlyph(m) }}</button>
+            }
+          </div>
+        </div>
+      }
+      @if (over()) {
+        <div class="veil"><h2>{{ statusText() }}</h2><button class="primary" (click)="newGame()">Play again</button></div>
+      }
+    </div>
+  </section>
+
+  <aside class="panel">
+    <h1>Gambit</h1>
+    <p class="status" [class.alert]="st() === 'check' || over()">{{ statusText() }}</p>
+
+    <div class="cap">
+      <div><span class="who">White took</span>
+        @for (p of caps().b; track $index) { <i class="gl">{{ glyph(p) }}</i> }
+        @if (adv() > 0) { <em>+{{ adv() }}</em> }</div>
+      <div><span class="who">Black took</span>
+        @for (p of caps().w; track $index) { <i class="gl w">{{ glyph(p) }}</i> }
+        @if (adv() < 0) { <em>+{{ -adv() }}</em> }</div>
+    </div>
+
+    <ol class="moves">
+      @for (r of rows(); track r.n) { <li><span>{{ r.n }}.</span><b>{{ r.w }}</b><b>{{ r.b }}</b></li> }
+      @empty { <li class="empty">Make a move to start the game.</li> }
+    </ol>
+
+    <div class="seg">
+      <button [class.on]="mode() === 'ai'" (click)="setMode('ai')">Play engine</button>
+      <button [class.on]="mode() === 'local'" (click)="setMode('local')">Two players</button>
+    </div>
+    @if (mode() === 'ai') {
+      <div class="seg">
+        <button [class.on]="level() === 1" (click)="level.set(1)">Easy</button>
+        <button [class.on]="level() === 2" (click)="level.set(2)">Medium</button>
+        <button [class.on]="level() === 3" (click)="level.set(3)">Hard</button>
+      </div>
+    }
+    <div class="actions">
+      <button (click)="undo()">Undo</button>
+      <button (click)="getHint()">Hint</button>
+      <button (click)="flipped.set(!flipped())">Flip board</button>
+      <button class="primary" (click)="newGame()">New game</button>
+    </div>
+  </aside>
+</main>
