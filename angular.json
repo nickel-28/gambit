@@ -22,7 +22,9 @@
             "inlineStyleLanguage": "scss",
             "styles": [
               "src/styles.scss"
-            ]
+            ],
+            "webWorkerTsConfig": "tsconfig.worker.json",
+            "assets": ["src/assets"]
           },
           "configurations": {
             "production": {

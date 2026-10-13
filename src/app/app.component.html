@@ -1,52 +1,126 @@
-<main class="app">
-  <section class="table">
-    <div class="evalbar" title="Material balance"><i [style.height.%]="whitePct()"></i></div>
-    <div class="board" [class.thinking]="busy()">
-      @for (i of order(); track i; let j = $index) {
-        <div class="sq" [class.light]="light(i)" [class.last]="isLast(i)" [class.sel]="sel() === i"
-             [class.target]="isTarget(i)" [class.capt]="isTarget(i) && !!s().b[i]" [class.check]="checkSq() === i"
-             [class.hint]="isHint(i)" (click)="click(i)" (dragover)="$event.preventDefault()" (drop)="drop(i)">
-          @if (s().b[i]; as p) {
-            <span class="pc" [class.w]="p[0] === 'w'" draggable="true" (dragstart)="pick(i)">{{ glyph(p) }}</span>
-          }
-          @if (j % 8 === 0) { <b class="rk">{{ rank(i) }}</b> }
-          @if (j > 55) { <b class="fl">{{ file(i) }}</b> }
-        </div>
-      }
-      @if (promo(); as pm) {
-        <div class="veil">
-          <p>Promote pawn to</p>
-          <div class="choices">
-            @for (m of pm; track m.promo) {
-              <button (click)="make(m)" [class.w]="s().turn === 'w'">{{ promoGlyph(m) }}</button>
-            }
-          </div>
-        </div>
-      }
-      @if (over()) {
-        <div class="veil"><h2>{{ statusText() }}</h2><button class="primary" (click)="newGame()">Play again</button></div>
-      }
-    </div>
-  </section>
+<main class="app" [style.--sq-l]="bt().l" [style.--sq-d]="bt().d">
+  <div class="sr" aria-live="polite">{{ live() }}</div>
 
-  <aside class="panel">
+  <!-- LEFT: game info -->
+  <aside class="panel info" [class.open]="sheet()">
+    <button class="handle" (click)="sheet.set(!sheet())" [attr.aria-expanded]="sheet()">
+      <span>{{ statusText() }}</span><span>{{ sheet() ? '▾' : '▴' }}</span>
+    </button>
     <h1>Gambit</h1>
     <p class="status" [class.alert]="st() === 'check' || over()">{{ statusText() }}</p>
+    @if (opening()) { <p class="opening">{{ opening() }}</p> }
 
     <div class="cap">
       <div><span class="who">White took</span>
-        @for (p of caps().b; track $index) { <i class="gl">{{ glyph(p) }}</i> }
+        @for (p of caps().b; track $index) {
+          @if (set() === 'glyph') { <i class="gl">{{ glyph(p) }}</i> } @else { <img class="gi" [src]="img(p)" alt=""> }
+        }
         @if (adv() > 0) { <em>+{{ adv() }}</em> }</div>
       <div><span class="who">Black took</span>
-        @for (p of caps().w; track $index) { <i class="gl w">{{ glyph(p) }}</i> }
+        @for (p of caps().w; track $index) {
+          @if (set() === 'glyph') { <i class="gl w">{{ glyph(p) }}</i> } @else { <img class="gi" [src]="img(p)" alt=""> }
+        }
         @if (adv() < 0) { <em>+{{ -adv() }}</em> }</div>
     </div>
 
     <ol class="moves">
-      @for (r of rows(); track r.n) { <li><span>{{ r.n }}.</span><b>{{ r.w }}</b><b>{{ r.b }}</b></li> }
-      @empty { <li class="empty">Make a move to start the game.</li> }
+      @for (r of rows(); track r.n) {
+        <li>
+          <span>{{ r.n }}.</span>
+          @if (r.w) { <button class="mv" [class.cur]="curPly() === r.w.i" (click)="goto(r.w.i)">{{ r.w.t }}</button> } @else { <i></i> }
+          @if (r.b) { <button class="mv" [class.cur]="curPly() === r.b.i" (click)="goto(r.b.i)">{{ r.b.t }}</button> } @else { <i></i> }
+        </li>
+      } @empty { <li class="empty">Make a move to start the game.</li> }
     </ol>
+    <div class="nav">
+      <button (click)="goto(0)" aria-label="First position">«</button>
+      <button (click)="step(-1)" aria-label="Previous move">‹</button>
+      <button (click)="step(1)" aria-label="Next move">›</button>
+      <button (click)="end()" aria-label="Latest position">»</button>
+    </div>
+    @if (view() !== null) {
+      <div class="review-bar">
+        <span>Reviewing move {{ view() }}</span>
+        <button (click)="branch()">Play from here</button>
+        <button (click)="end()">Back to live</button>
+      </div>
+    }
+    @if (mode() === 'ai') {
+      <p class="stats">Record vs engine: {{ stats().w }} wins, {{ stats().l }} losses, {{ stats().d }} draws</p>
+    }
+  </aside>
 
+  <!-- CENTRE: board -->
+  <section class="table">
+    <div class="evalbar" title="Material balance"><i [style.height.%]="whitePct()"></i></div>
+    <div class="col">
+      @if (clockOn()) {
+        <div class="clock" [class.black]="topSide() === 'b'" [class.run]="runs(topSide())" [class.low]="low(topSide())">
+          <span>{{ topSide() === 'w' ? 'White' : 'Black' }}</span><b>{{ fmt(time(topSide())) }}</b>
+        </div>
+      }
+      <div class="board" role="application" tabindex="0"
+           aria-label="Chess board. Arrow keys move the cursor, Enter selects or moves, Escape cancels. Page Up and Page Down review moves."
+           [class.thinking]="busy()" [class.review]="view() !== null" (keydown)="key($event)"
+           (focus)="focus.set(true)" (blur)="focus.set(false)" (contextmenu)="$event.preventDefault()">
+        @for (i of order(); track i; let j = $index) {
+          <div class="sq" [class.light]="light(i)" [class.last]="isLast(i)" [class.sel]="sel() === i"
+               [class.target]="isTarget(i)" [class.capt]="isTarget(i) && !!shown().b[i]" [class.check]="checkSq() === i"
+               [class.hint]="isHint(i)" [class.pre]="isPre(i)" [class.mark]="marks().includes(i)"
+               [class.cursor]="focus() && cursor() === i"
+               (click)="click(i)" (dragover)="$event.preventDefault()" (drop)="drop(i)"
+               (pointerdown)="rdown($event, i)" (pointerup)="rup($event, i)">
+            @if (ghost(); as g) {
+              @if (g.i === i && view() === null) {
+                <span class="pc ghost" [class.w]="g.p[0] === 'w'">
+                  @if (set() === 'glyph') { {{ glyph(g.p) }} } @else { <img [src]="img(g.p)" alt=""> }
+                </span>
+              }
+            }
+            @if (shown().b[i]; as p) {
+              <span class="pc" [id]="'pc' + i" [class.w]="p[0] === 'w'" draggable="true" (dragstart)="pick(i)">
+                @if (set() === 'glyph') { {{ glyph(p) }} } @else { <img [src]="img(p)" alt="" draggable="false"> }
+              </span>
+            }
+            @if (j % 8 === 0) { <b class="rk">{{ rank(i) }}</b> }
+            @if (j > 55) { <b class="fl">{{ file(i) }}</b> }
+          </div>
+        }
+
+        <svg class="arrows" viewBox="0 0 8 8" aria-hidden="true">
+          <defs><marker id="ah" markerWidth="4" markerHeight="4" refX="2.2" refY="2" orient="auto"><path d="M0,0L4,2L0,4z"/></marker></defs>
+          @for (a of arrows(); track $index) {
+            @let l = arrow(a);
+            <line [attr.x1]="l.x1" [attr.y1]="l.y1" [attr.x2]="l.x2" [attr.y2]="l.y2" marker-end="url(#ah)"/>
+          }
+        </svg>
+
+        @if (promo(); as pm) {
+          <div class="veil">
+            <p>Promote pawn to</p>
+            <div class="choices">
+              @for (m of pm; track m.promo) {
+                <button (click)="make(m)" [class.w]="s().turn === 'w'">
+                  @if (set() === 'glyph') { {{ promoGlyph(m) }} } @else { <img [src]="img(s().turn + m.promo)" alt=""> }
+                </button>
+              }
+            </div>
+          </div>
+        }
+        @if (over() && view() === null) {
+          <div class="veil"><h2>{{ statusText() }}</h2><button class="primary" (click)="newGame()">Play again</button></div>
+        }
+      </div>
+      @if (clockOn()) {
+        <div class="clock" [class.black]="botSide() === 'b'" [class.run]="runs(botSide())" [class.low]="low(botSide())">
+          <span>{{ botSide() === 'w' ? 'White' : 'Black' }}</span><b>{{ fmt(time(botSide())) }}</b>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- RIGHT: controls -->
+  <aside class="panel ctrl">
     <div class="seg">
       <button [class.on]="mode() === 'ai'" (click)="setMode('ai')">Play engine</button>
       <button [class.on]="mode() === 'local'" (click)="setMode('local')">Two players</button>
@@ -58,11 +132,48 @@
         <button [class.on]="level() === 3" (click)="level.set(3)">Hard</button>
       </div>
     }
+    <label class="row">Clock
+      <select (change)="setClock($any($event.target).value)">
+        @for (p of presets; track p.id) { <option [value]="p.id" [selected]="clockId() === p.id">{{ p.name }}</option> }
+      </select>
+    </label>
+
     <div class="actions">
       <button (click)="undo()">Undo</button>
       <button (click)="getHint()">Hint</button>
       <button (click)="flipped.set(!flipped())">Flip board</button>
+      <button (click)="offerDraw()">Offer draw</button>
+      <button (click)="resign()">Resign</button>
       <button class="primary" (click)="newGame()">New game</button>
+    </div>
+
+    <details class="io">
+      <summary>Import and export</summary>
+      <textarea rows="4" placeholder="Paste a FEN or PGN here" [value]="io()" (input)="io.set($any($event.target).value)"></textarea>
+      <div class="actions">
+        <button (click)="loadText(io())">Import</button>
+        <button (click)="io.set('')">Clear</button>
+        <button (click)="copy(fen(), 'FEN')">Copy FEN</button>
+        <button (click)="copy(pgn(), 'PGN')">Copy PGN</button>
+      </div>
+    </details>
+    @if (msg()) { <p class="toast" role="status">{{ msg() }}</p> }
+
+    <div class="look">
+      <div class="swatches" role="group" aria-label="Board colours">
+        @for (b of boards; track b.id) {
+          <button class="sw" [class.on]="board() === b.id" [title]="b.name" [attr.aria-label]="b.name + ' board'"
+                  [style.background]="'linear-gradient(135deg,' + b.l + ' 50%,' + b.d + ' 50%)'" (click)="board.set(b.id)"></button>
+        }
+      </div>
+      <div class="seg">
+        @for (p of sets; track p.id) { <button [class.on]="set() === p.id" (click)="set.set(p.id)">{{ p.name }}</button> }
+      </div>
+      <div class="seg">
+        <button [class.on]="theme() === 'dark'" (click)="theme.set('dark')">Dark</button>
+        <button [class.on]="theme() === 'light'" (click)="theme.set('light')">Light</button>
+        <button [class.on]="sound()" (click)="sound.set(!sound())">{{ sound() ? 'Sound on' : 'Sound off' }}</button>
+      </div>
     </div>
   </aside>
 </main>

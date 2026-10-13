@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output and caches
+/dist
+/out-tsc
+/tmp
+/.angular/cache
+.sass-cache/
+
+# Environment files and secrets
+.env
+.env.*
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
